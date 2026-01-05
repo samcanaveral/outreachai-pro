@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { Mail, Upload, Send, BarChart3, Users, TrendingUp, CheckCircle, Zap, Brain, Calendar, Check, Shield, Crown, Rocket, X, Building2, Phone } from 'lucide-react';
+import React, { useState, memo } from 'react';
+import { Zap, Check, Shield, Crown, Rocket, X, TrendingUp } from 'lucide-react';
 
 const plans = [
   {
@@ -38,80 +38,56 @@ const plans = [
   }
 ];
 
-export default function App() {
-  const [showRequestForm, setShowRequestForm] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [billingCycle, setBillingCycle] = useState('monthly');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
-  const [phone, setPhone] = useState('');
-  const [monthlyVolume, setMonthlyVolume] = useState('');
-  const [message, setMessage] = useState('');
+const RequestFormContent = memo(({ selectedPlan, billingCycle, onClose, onSuccess }) => {
+  const [formState, setFormState] = useState({
+    name: '',
+    email: '',
+    company: '',
+    phone: '',
+    monthlyVolume: '',
+    message: ''
+  });
 
-  const handleSelectPlan = useCallback((plan) => {
-    setSelectedPlan(plan);
-    setShowRequestForm(true);
-    setFormSubmitted(false);
-  }, []);
-
-  const handleNameChange = useCallback((e) => setName(e.target.value), []);
-  const handleEmailChange = useCallback((e) => setEmail(e.target.value), []);
-  const handleCompanyChange = useCallback((e) => setCompany(e.target.value), []);
-  const handlePhoneChange = useCallback((e) => setPhone(e.target.value), []);
-  const handleVolumeChange = useCallback((e) => setMonthlyVolume(e.target.value), []);
-  const handleMessageChange = useCallback((e) => setMessage(e.target.value), []);
+  const handleChange = (field) => (e) => {
+    setFormState(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const leadData = {
-      plan: selectedPlan.name,
-      price: `$${billingCycle === 'monthly' ? selectedPlan.priceMonthly : selectedPlan.priceYearly}/${billingCycle === 'monthly' ? 'mo' : 'yr'}`,
-      billingCycle,
-      name,
-      email,
-      company,
-      phone,
-      monthlyVolume,
-      message,
-      timestamp: new Date().toLocaleString()
-    };
-    
     try {
       await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_key: 'cf7fd870-7900-4ede-a19d-ff22679d296e',
-          subject: `🚀 New OutreachAI Lead: ${selectedPlan.name} Plan - ${company}`,
+          subject: `🚀 New OutreachAI Lead: ${selectedPlan.name} Plan - ${formState.company}`,
           from_name: 'OutreachAI Pro',
           to: 'prooutreachai@gmail.com',
           message: `
 NEW LEAD ALERT! 🎉
 
-Plan: ${leadData.plan}
-Price: ${leadData.price}
-Billing: ${leadData.billingCycle}
+Plan: ${selectedPlan.name}
+Price: $${billingCycle === 'monthly' ? selectedPlan.priceMonthly : selectedPlan.priceYearly}/${billingCycle === 'monthly' ? 'mo' : 'yr'}
 
 CONTACT INFO:
-Name: ${name}
-Email: ${email}
-Company: ${company}
-Phone: ${phone || 'Not provided'}
+Name: ${formState.name}
+Email: ${formState.email}
+Company: ${formState.company}
+Phone: ${formState.phone || 'Not provided'}
 
 DETAILS:
-Monthly Volume: ${monthlyVolume}
-Use Case: ${message || 'Not provided'}
+Monthly Volume: ${formState.monthlyVolume}
+Use Case: ${formState.message || 'Not provided'}
 
-Submitted: ${leadData.timestamp}
+Submitted: ${new Date().toLocaleString()}
 
 ---
 NEXT STEPS:
-1. Reply to ${email} within 24 hours
+1. Reply to ${formState.email} within 24 hours
 2. Send payment link (Stripe/PayPal)
 3. Create account after payment
 4. Give 1,000 bonus credits
@@ -122,161 +98,145 @@ NEXT STEPS:
       console.error('Email error:', error);
     }
     
-    setFormSubmitted(true);
-    
-    setTimeout(() => {
-      setShowRequestForm(false);
-      setName('');
-      setEmail('');
-      setCompany('');
-      setPhone('');
-      setMonthlyVolume('');
-      setMessage('');
-      setFormSubmitted(false);
-    }, 5000);
+    onSuccess(formState.email);
   };
 
-  const RequestAccessModal = () => {
-    if (!showRequestForm || !selectedPlan) return null;
-
-    if (formSubmitted) {
-      return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-green-500/30 rounded-2xl max-w-md w-full p-8 text-center">
-            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-8 h-8 text-green-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Request Received! 🎉</h3>
-            <p className="text-purple-300 mb-4">Thanks for your interest in the <span className="text-white font-semibold">{selectedPlan.name}</span> plan!</p>
-            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 text-left mb-4">
-              <p className="text-sm text-purple-200 mb-2">📧 Check your email: <span className="text-white font-medium">{email}</span></p>
-              <p className="text-sm text-purple-200">We'll send you:</p>
-              <ul className="text-sm text-purple-300 mt-2 space-y-1 ml-4">
-                <li>• Login credentials</li>
-                <li>• Payment link</li>
-                <li>• Onboarding guide</li>
-              </ul>
-            </div>
-            <p className="text-sm text-purple-400">Expect a response within 24 hours!</p>
-          </div>
+  return (
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-purple-500/30 rounded-2xl max-w-md w-full p-8 relative my-8">
+      <button onClick={onClose} className="absolute top-4 right-4 text-purple-300 hover:text-white">
+        <X className="w-6 h-6" />
+      </button>
+      
+      <div className="text-center mb-6">
+        <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${selectedPlan.color} mb-4`}>
+          <selectedPlan.icon className="w-8 h-8" />
         </div>
-      );
-    }
-
-    return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-purple-500/30 rounded-2xl max-w-md w-full p-8 relative my-8">
-          <button onClick={() => setShowRequestForm(false)} className="absolute top-4 right-4 text-purple-300 hover:text-white">
-            <X className="w-6 h-6" />
-          </button>
-          
-          <div className="text-center mb-6">
-            <div className={`inline-flex p-3 rounded-xl bg-gradient-to-r ${selectedPlan.color} mb-4`}>
-              <selectedPlan.icon className="w-8 h-8" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-2">Request Early Access</h3>
-            <p className="text-purple-300">Get started with the <span className="text-white font-semibold">{selectedPlan.name}</span> plan</p>
-          </div>
-
-          <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-white font-medium">{selectedPlan.name} Plan</span>
-              <span className="text-white font-bold">${billingCycle === 'monthly' ? selectedPlan.priceMonthly : selectedPlan.priceYearly}/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
-            </div>
-            <div className="text-sm text-purple-300">{selectedPlan.emailsIncluded.toLocaleString()} emails included</div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2 text-purple-300">Full Name *</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={handleNameChange}
-                placeholder="John Doe"
-                className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-purple-300">Work Email *</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="john@company.com"
-                className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-purple-300">Company Name *</label>
-              <input
-                type="text"
-                required
-                value={company}
-                onChange={handleCompanyChange}
-                placeholder="Acme Corp"
-                className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-purple-300">Phone Number</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={handlePhoneChange}
-                placeholder="+1 (555) 123-4567"
-                className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-purple-300">Monthly Email Volume *</label>
-              <select
-                required
-                value={monthlyVolume}
-                onChange={handleVolumeChange}
-                className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-400"
-              >
-                <option value="">Select volume...</option>
-                <option value="0-1000">0 - 1,000 emails</option>
-                <option value="1000-5000">1,000 - 5,000 emails</option>
-                <option value="5000-10000">5,000 - 10,000 emails</option>
-                <option value="10000-25000">10,000 - 25,000 emails</option>
-                <option value="25000+">25,000+ emails</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-purple-300">Tell us about your use case</label>
-              <textarea
-                value={message}
-                onChange={handleMessageChange}
-                placeholder="What are you looking to achieve with cold email outreach?"
-                rows={3}
-                className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 rounded-lg transition-all"
-            >
-              Request Access
-            </button>
-
-            <div className="flex items-center justify-center gap-2 text-xs text-purple-400">
-              <Shield className="w-4 h-4" />
-              <span>We'll respond within 24 hours • No spam, ever</span>
-            </div>
-          </form>
-        </div>
+        <h3 className="text-2xl font-bold text-white mb-2">Request Early Access</h3>
+        <p className="text-purple-300">Get started with the <span className="text-white font-semibold">{selectedPlan.name}</span> plan</p>
       </div>
-    );
+
+      <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-white font-medium">{selectedPlan.name} Plan</span>
+          <span className="text-white font-bold">${billingCycle === 'monthly' ? selectedPlan.priceMonthly : selectedPlan.priceYearly}/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+        </div>
+        <div className="text-sm text-purple-300">{selectedPlan.emailsIncluded.toLocaleString()} emails included</div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2 text-purple-300">Full Name *</label>
+          <input
+            type="text"
+            required
+            value={formState.name}
+            onChange={handleChange('name')}
+            placeholder="John Doe"
+            className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-purple-300">Work Email *</label>
+          <input
+            type="email"
+            required
+            value={formState.email}
+            onChange={handleChange('email')}
+            placeholder="john@company.com"
+            className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-purple-300">Company Name *</label>
+          <input
+            type="text"
+            required
+            value={formState.company}
+            onChange={handleChange('company')}
+            placeholder="Acme Corp"
+            className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-purple-300">Phone Number</label>
+          <input
+            type="tel"
+            value={formState.phone}
+            onChange={handleChange('phone')}
+            placeholder="+1 (555) 123-4567"
+            className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-purple-300">Monthly Email Volume *</label>
+          <select
+            required
+            value={formState.monthlyVolume}
+            onChange={handleChange('monthlyVolume')}
+            className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-400"
+          >
+            <option value="">Select volume...</option>
+            <option value="0-1000">0 - 1,000 emails</option>
+            <option value="1000-5000">1,000 - 5,000 emails</option>
+            <option value="5000-10000">5,000 - 10,000 emails</option>
+            <option value="10000-25000">10,000 - 25,000 emails</option>
+            <option value="25000+">25,000+ emails</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-purple-300">Tell us about your use case</label>
+          <textarea
+            value={formState.message}
+            onChange={handleChange('message')}
+            placeholder="What are you looking to achieve with cold email outreach?"
+            rows={3}
+            className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 rounded-lg transition-all"
+        >
+          Request Access
+        </button>
+
+        <div className="flex items-center justify-center gap-2 text-xs text-purple-400">
+          <Shield className="w-4 h-4" />
+          <span>We'll respond within 24 hours • No spam, ever</span>
+        </div>
+      </form>
+    </div>
+  );
+});
+
+RequestFormContent.displayName = 'RequestFormContent';
+
+export default function App() {
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
+  const [billingCycle, setBillingCycle] = useState('monthly');
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan);
+    setShowRequestForm(true);
+    setFormSubmitted(false);
+  };
+
+  const handleSuccess = (email) => {
+    setSubmittedEmail(email);
+    setFormSubmitted(true);
+    setTimeout(() => {
+      setShowRequestForm(false);
+      setFormSubmitted(false);
+    }, 5000);
   };
 
   return (
@@ -300,7 +260,7 @@ NEXT STEPS:
 
           <div className="flex items-center justify-center gap-4 mb-4">
             <span className={billingCycle === 'monthly' ? 'text-white font-medium' : 'text-purple-400'}>Monthly</span>
-            <button onClick={() => setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly')} className="relative w-14 h-7 bg-purple-500/30 rounded-full">
+            <button onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')} className="relative w-14 h-7 bg-purple-500/30 rounded-full">
               <div className={`absolute top-1 left-1 w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-transform ${billingCycle === 'yearly' ? 'translate-x-7' : ''}`}></div>
             </button>
             <span className={billingCycle === 'yearly' ? 'text-white font-medium' : 'text-purple-400'}>Yearly</span>
@@ -355,7 +315,36 @@ NEXT STEPS:
         </div>
       </div>
 
-      <RequestAccessModal />
+      {showRequestForm && selectedPlan && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          {formSubmitted ? (
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-green-500/30 rounded-2xl max-w-md w-full p-8 text-center">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-green-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Request Received! 🎉</h3>
+              <p className="text-purple-300 mb-4">Thanks for your interest in the <span className="text-white font-semibold">{selectedPlan.name}</span> plan!</p>
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 text-left mb-4">
+                <p className="text-sm text-purple-200 mb-2">📧 Check your email: <span className="text-white font-medium">{submittedEmail}</span></p>
+                <p className="text-sm text-purple-200">We'll send you:</p>
+                <ul className="text-sm text-purple-300 mt-2 space-y-1 ml-4">
+                  <li>• Login credentials</li>
+                  <li>• Payment link</li>
+                  <li>• Onboarding guide</li>
+                </ul>
+              </div>
+              <p className="text-sm text-purple-400">Expect a response within 24 hours!</p>
+            </div>
+          ) : (
+            <RequestFormContent 
+              selectedPlan={selectedPlan}
+              billingCycle={billingCycle}
+              onClose={() => setShowRequestForm(false)}
+              onSuccess={handleSuccess}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
