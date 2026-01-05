@@ -1,71 +1,59 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Mail, Upload, Send, BarChart3, Users, TrendingUp, CheckCircle, Zap, Brain, Calendar, Check, Shield, Crown, Rocket, X, Building2, Phone } from 'lucide-react';
 
+const plans = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    icon: Rocket,
+    color: 'from-blue-500 to-cyan-500',
+    priceMonthly: 99,
+    priceYearly: 950,
+    emailsIncluded: 1000,
+    description: 'Perfect for small teams testing cold outreach',
+    features: ['1,000 emails per month', 'Basic AI personalization', 'Email validation', 'Spam score detection', 'Basic analytics', 'Email support']
+  },
+  {
+    id: 'professional',
+    name: 'Professional',
+    icon: TrendingUp,
+    color: 'from-purple-500 to-pink-500',
+    priceMonthly: 299,
+    priceYearly: 2870,
+    emailsIncluded: 5000,
+    description: 'Most popular for growing sales teams',
+    popular: true,
+    features: ['5,000 emails per month', 'Advanced AI personalization', 'Smart send-time optimization', 'A/B testing engine', 'Deliverability warmup', 'Advanced analytics & insights', 'Auto follow-up sequences', 'Priority support', 'CRM integrations']
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    icon: Crown,
+    color: 'from-amber-500 to-orange-500',
+    priceMonthly: 799,
+    priceYearly: 7670,
+    emailsIncluded: 25000,
+    description: 'For teams that need scale and white-label',
+    features: ['25,000 emails per month', 'Everything in Professional', 'White-label option', 'Dedicated account manager', 'Custom integrations', 'API access', 'Team collaboration', 'Advanced security & SSO']
+  }
+];
+
 export default function App() {
-  const [currentView, setCurrentView] = useState('pricing');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [billingCycle, setBillingCycle] = useState('monthly');
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    company: '',
-    phone: '',
-    monthlyVolume: '',
-    message: ''
-  });
-
-  const plans = useMemo(() => [
-    {
-      id: 'starter',
-      name: 'Starter',
-      icon: Rocket,
-      color: 'from-blue-500 to-cyan-500',
-      priceMonthly: 99,
-      priceYearly: 950,
-      emailsIncluded: 1000,
-      description: 'Perfect for small teams testing cold outreach',
-      features: ['1,000 emails per month', 'Basic AI personalization', 'Email validation', 'Spam score detection', 'Basic analytics', 'Email support']
-    },
-    {
-      id: 'professional',
-      name: 'Professional',
-      icon: TrendingUp,
-      color: 'from-purple-500 to-pink-500',
-      priceMonthly: 299,
-      priceYearly: 2870,
-      emailsIncluded: 5000,
-      description: 'Most popular for growing sales teams',
-      popular: true,
-      features: ['5,000 emails per month', 'Advanced AI personalization', 'Smart send-time optimization', 'A/B testing engine', 'Deliverability warmup', 'Advanced analytics & insights', 'Auto follow-up sequences', 'Priority support', 'CRM integrations']
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      icon: Crown,
-      color: 'from-amber-500 to-orange-500',
-      priceMonthly: 799,
-      priceYearly: 7670,
-      emailsIncluded: 25000,
-      description: 'For teams that need scale and white-label',
-      features: ['25,000 emails per month', 'Everything in Professional', 'White-label option', 'Dedicated account manager', 'Custom integrations', 'API access', 'Team collaboration', 'Advanced security & SSO']
-    }
-  ], []);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [company, setCompany] = useState('');
+  const [phone, setPhone] = useState('');
+  const [monthlyVolume, setMonthlyVolume] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSelectPlan = (plan) => {
     setSelectedPlan(plan);
     setShowRequestForm(true);
     setFormSubmitted(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
   };
 
   const handleSubmit = async (e) => {
@@ -75,19 +63,24 @@ export default function App() {
       plan: selectedPlan.name,
       price: `$${billingCycle === 'monthly' ? selectedPlan.priceMonthly : selectedPlan.priceYearly}/${billingCycle === 'monthly' ? 'mo' : 'yr'}`,
       billingCycle,
-      ...formData,
+      name,
+      email,
+      company,
+      phone,
+      monthlyVolume,
+      message,
       timestamp: new Date().toLocaleString()
     };
     
     try {
-      const response = await fetch('https://api.web3forms.com/submit', {
+      await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           access_key: 'cf7fd870-7900-4ede-a19d-ff22679d296e',
-          subject: `🚀 New OutreachAI Lead: ${selectedPlan.name} Plan - ${formData.company}`,
+          subject: `🚀 New OutreachAI Lead: ${selectedPlan.name} Plan - ${company}`,
           from_name: 'OutreachAI Pro',
           to: 'prooutreachai@gmail.com',
           message: `
@@ -98,30 +91,26 @@ Price: ${leadData.price}
 Billing: ${leadData.billingCycle}
 
 CONTACT INFO:
-Name: ${formData.name}
-Email: ${formData.email}
-Company: ${formData.company}
-Phone: ${formData.phone || 'Not provided'}
+Name: ${name}
+Email: ${email}
+Company: ${company}
+Phone: ${phone || 'Not provided'}
 
 DETAILS:
-Monthly Volume: ${formData.monthlyVolume}
-Use Case: ${formData.message || 'Not provided'}
+Monthly Volume: ${monthlyVolume}
+Use Case: ${message || 'Not provided'}
 
 Submitted: ${leadData.timestamp}
 
 ---
 NEXT STEPS:
-1. Reply to ${formData.email} within 24 hours
+1. Reply to ${email} within 24 hours
 2. Send payment link (Stripe/PayPal)
 3. Create account after payment
 4. Give 1,000 bonus credits
           `
         })
       });
-
-      if (response.ok) {
-        console.log('✅ Email sent successfully!');
-      }
     } catch (error) {
       console.error('Email error:', error);
     }
@@ -130,7 +119,12 @@ NEXT STEPS:
     
     setTimeout(() => {
       setShowRequestForm(false);
-      setFormData({ name: '', email: '', company: '', phone: '', monthlyVolume: '', message: '' });
+      setName('');
+      setEmail('');
+      setCompany('');
+      setPhone('');
+      setMonthlyVolume('');
+      setMessage('');
       setFormSubmitted(false);
     }, 5000);
   };
@@ -148,7 +142,7 @@ NEXT STEPS:
             <h3 className="text-2xl font-bold text-white mb-2">Request Received! 🎉</h3>
             <p className="text-purple-300 mb-4">Thanks for your interest in the <span className="text-white font-semibold">{selectedPlan.name}</span> plan!</p>
             <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 text-left mb-4">
-              <p className="text-sm text-purple-200 mb-2">📧 Check your email: <span className="text-white font-medium">{formData.email}</span></p>
+              <p className="text-sm text-purple-200 mb-2">📧 Check your email: <span className="text-white font-medium">{email}</span></p>
               <p className="text-sm text-purple-200">We'll send you:</p>
               <ul className="text-sm text-purple-300 mt-2 space-y-1 ml-4">
                 <li>• Login credentials</li>
@@ -190,10 +184,9 @@ NEXT STEPS:
               <label className="block text-sm font-medium mb-2 text-purple-300">Full Name *</label>
               <input
                 type="text"
-                name="name"
                 required
-                value={formData.name}
-                onChange={handleInputChange}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -203,10 +196,9 @@ NEXT STEPS:
               <label className="block text-sm font-medium mb-2 text-purple-300">Work Email *</label>
               <input
                 type="email"
-                name="email"
                 required
-                value={formData.email}
-                onChange={handleInputChange}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@company.com"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -216,10 +208,9 @@ NEXT STEPS:
               <label className="block text-sm font-medium mb-2 text-purple-300">Company Name *</label>
               <input
                 type="text"
-                name="company"
                 required
-                value={formData.company}
-                onChange={handleInputChange}
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
                 placeholder="Acme Corp"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -229,9 +220,8 @@ NEXT STEPS:
               <label className="block text-sm font-medium mb-2 text-purple-300">Phone Number</label>
               <input
                 type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 placeholder="+1 (555) 123-4567"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -240,10 +230,9 @@ NEXT STEPS:
             <div>
               <label className="block text-sm font-medium mb-2 text-purple-300">Monthly Email Volume *</label>
               <select
-                name="monthlyVolume"
                 required
-                value={formData.monthlyVolume}
-                onChange={handleInputChange}
+                value={monthlyVolume}
+                onChange={(e) => setMonthlyVolume(e.target.value)}
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-400"
               >
                 <option value="">Select volume...</option>
@@ -258,9 +247,8 @@ NEXT STEPS:
             <div>
               <label className="block text-sm font-medium mb-2 text-purple-300">Tell us about your use case</label>
               <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleInputChange}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 placeholder="What are you looking to achieve with cold email outreach?"
                 rows={3}
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
