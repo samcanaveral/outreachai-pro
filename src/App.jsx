@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Mail, Upload, Send, BarChart3, Users, TrendingUp, CheckCircle, Zap, Brain, Calendar, Check, Shield, Crown, Rocket, X, Building2, Phone } from 'lucide-react';
 
 const plans = [
@@ -50,11 +50,18 @@ export default function App() {
   const [monthlyVolume, setMonthlyVolume] = useState('');
   const [message, setMessage] = useState('');
 
-  const handleSelectPlan = (plan) => {
+  const handleSelectPlan = useCallback((plan) => {
     setSelectedPlan(plan);
     setShowRequestForm(true);
     setFormSubmitted(false);
-  };
+  }, []);
+
+  const handleNameChange = useCallback((e) => setName(e.target.value), []);
+  const handleEmailChange = useCallback((e) => setEmail(e.target.value), []);
+  const handleCompanyChange = useCallback((e) => setCompany(e.target.value), []);
+  const handlePhoneChange = useCallback((e) => setPhone(e.target.value), []);
+  const handleVolumeChange = useCallback((e) => setMonthlyVolume(e.target.value), []);
+  const handleMessageChange = useCallback((e) => setMessage(e.target.value), []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -186,7 +193,7 @@ NEXT STEPS:
                 type="text"
                 required
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={handleNameChange}
                 placeholder="John Doe"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -198,7 +205,7 @@ NEXT STEPS:
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 placeholder="john@company.com"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -210,7 +217,7 @@ NEXT STEPS:
                 type="text"
                 required
                 value={company}
-                onChange={(e) => setCompany(e.target.value)}
+                onChange={handleCompanyChange}
                 placeholder="Acme Corp"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -221,7 +228,7 @@ NEXT STEPS:
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={handlePhoneChange}
                 placeholder="+1 (555) 123-4567"
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
               />
@@ -232,7 +239,7 @@ NEXT STEPS:
               <select
                 required
                 value={monthlyVolume}
-                onChange={(e) => setMonthlyVolume(e.target.value)}
+                onChange={handleVolumeChange}
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-400"
               >
                 <option value="">Select volume...</option>
@@ -248,7 +255,7 @@ NEXT STEPS:
               <label className="block text-sm font-medium mb-2 text-purple-300">Tell us about your use case</label>
               <textarea
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={handleMessageChange}
                 placeholder="What are you looking to achieve with cold email outreach?"
                 rows={3}
                 className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:border-purple-400"
